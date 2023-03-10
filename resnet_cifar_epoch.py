@@ -12,20 +12,20 @@ model_urls = {
 }
 
 
-def conv3x3(epoch, in_planes, out_planes, stride=1, groups=1, dilation=1, compute_flavour=0):
+def conv3x3(in_planes, out_planes, stride=1, groups=1, dilation=1, compute_flavour=0):
     """3x3 convolution with padding"""
-    return customConv2d(epoch, in_planes, out_planes, kernel_size=3, stride=stride,
+    return customConv2d(in_planes, out_planes, kernel_size=3, stride=stride,
                         padding=dilation, groups=groups, bias=False, dilation=dilation, compute_flavour=compute_flavour)
 
-def conv1x1(epoch, in_planes, out_planes, stride=1, compute_flavour=0):
+def conv1x1(in_planes, out_planes, stride=1, compute_flavour=0):
     """1x1 convolution"""
-    return customConv2d(epoch, in_planes, out_planes, kernel_size=1, stride=stride, bias=False, compute_flavour=compute_flavour)
+    return customConv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False, compute_flavour=compute_flavour)
 
 class BasicBlock(nn.Module):
     expansion = 1
 
     def __init__(self, inplanes, planes, stride=1, downsample=None, groups=1,
-                 base_width=64, dilation=1, norm_layer=None, compute_flavour=0, epoch =0):
+                 base_width=64, dilation=1, norm_layer=None, compute_flavour=0):
         super(BasicBlock, self).__init__()
         self.compute_flavour = compute_flavour
 
@@ -36,10 +36,10 @@ class BasicBlock(nn.Module):
         if dilation > 1:
             raise NotImplementedError("Dilation > 1 not supported in BasicBlock")
         # Both self.conv1 and self.downsample layers downsample the input when stride != 1
-        self.conv1 = conv3x3(epoch, inplanes, planes, stride, compute_flavour=compute_flavour)
+        self.conv1 = conv3x3(inplanes, planes, stride, compute_flavour=compute_flavour)
         self.bn1 = norm_layer(planes)
         self.relu = nn.ReLU(inplace=True)
-        self.conv2 = conv3x3(epoch, planes, planes, compute_flavour=compute_flavour)
+        self.conv2 = conv3x3(planes, planes, compute_flavour=compute_flavour)
         self.bn2 = norm_layer(planes)
         self.downsample = downsample
         self.stride = stride
@@ -83,11 +83,11 @@ class Bottleneck(nn.Module):
             norm_layer = nn.BatchNorm2d
         width = int(planes * (base_width / 64.)) * groups
         # Both self.conv2 and self.downsample layers downsample the input when stride != 1
-        self.conv1 = conv1x1(epoch, inplanes, width, compute_flavour=compute_flavour)
+        self.conv1 = conv1x1(inplanes, width, compute_flavour=compute_flavour)
         self.bn1 = norm_layer(width)
-        self.conv2 = conv3x3(epoch, width, width, stride, groups, dilation, compute_flavour=compute_flavour)
+        self.conv2 = conv3x3(width, width, stride, groups, dilation, compute_flavour=compute_flavour)
         self.bn2 = norm_layer(width)
-        self.conv3 = conv1x1(epoch, width, planes * self.expansion, compute_flavour=compute_flavour)
+        self.conv3 = conv1x1(width, planes * self.expansion, compute_flavour=compute_flavour)
         self.bn3 = norm_layer(planes * self.expansion)
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
@@ -122,7 +122,7 @@ class ResNet(nn.Module):
 
     def __init__(self, block, layers, num_classes=1000, zero_init_residual=False,
                  groups=1, width_per_group=64, replace_stride_with_dilation=None,
-                 norm_layer=None, compute_flavour=0, epoch=0, device='cuda', verbose=0):
+                 norm_layer=None, compute_flavour=0, device='cuda', verbose=0):
         super(ResNet, self).__init__()
 
         self.compute_flavour = compute_flavour
@@ -145,19 +145,19 @@ class ResNet(nn.Module):
         self.groups = groups
         self.base_width = width_per_group
         #TODO: changed for CIFAR100 (from original Imagenet parameters)
-        self.conv1 = customConv2d(epoch, 3, self.inplanes, kernel_size=3, stride=1, padding=1, bias=False,
+        self.conv1 = customConv2d(3, self.inplanes, kernel_size=3, stride=1, padding=1, bias=False,
                                   compute_flavour=self.compute_flavour,
                                   device=self.device, verbose=self.verbose)
 
         self.bn1 = norm_layer(self.inplanes)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(block, epoch, 64, layers[0], compute_flavour=self.compute_flavour)
-        self.layer2 = self._make_layer(block, epoch, 128, layers[1], stride=2,
+        self.layer1 = self._make_layer(block, 64, layers[0], compute_flavour=self.compute_flavour)
+        self.layer2 = self._make_layer(block, 128, layers[1], stride=2,
                                        dilate=replace_stride_with_dilation[0], compute_flavour=self.compute_flavour)
-        self.layer3 = self._make_layer(block, epoch, 256, layers[2], stride=2,
+        self.layer3 = self._make_layer(block, 256, layers[2], stride=2,
                                        dilate=replace_stride_with_dilation[1], compute_flavour=self.compute_flavour)
-        self.layer4 = self._make_layer(block, epoch, 512, layers[3], stride=2,
+        self.layer4 = self._make_layer(block, 512, layers[3], stride=2,
                                        dilate=replace_stride_with_dilation[2], compute_flavour=self.compute_flavour)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512 * block.expansion, num_classes)
@@ -179,7 +179,7 @@ class ResNet(nn.Module):
                 elif isinstance(m, BasicBlock):
                     nn.init.constant_(m.bn2.weight, 0)
 
-    def _make_layer(self, block, epoch, planes, blocks, stride=1, dilate=False, compute_flavour=0):
+    def _make_layer(self, block, planes, blocks, stride=1, dilate=False, compute_flavour=0):
         norm_layer = self._norm_layer
         downsample = None
         previous_dilation = self.dilation
@@ -188,18 +188,18 @@ class ResNet(nn.Module):
             stride = 1
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
-                conv1x1(epoch, self.inplanes, planes * block.expansion, stride, compute_flavour),
+                conv1x1(self.inplanes, planes * block.expansion, stride, compute_flavour),
                 norm_layer(planes * block.expansion),
             )
 
         layers = []
         layers.append(block(self.inplanes, planes, stride, downsample, self.groups,
-                            self.base_width, previous_dilation, norm_layer, compute_flavour=compute_flavour, epoch=epoch))
+                            self.base_width, previous_dilation, norm_layer, compute_flavour=compute_flavour))
         self.inplanes = planes * block.expansion
         for _ in range(1, blocks):
             layers.append(block(self.inplanes, planes, groups=self.groups,
                                 base_width=self.base_width, dilation=self.dilation,
-                                norm_layer=norm_layer, compute_flavour=compute_flavour, epoch=epoch))
+                                norm_layer=norm_layer, compute_flavour=compute_flavour))
 
         return nn.Sequential(*layers)
 
@@ -253,5 +253,5 @@ def resnet18(pretrained=False, progress=True, **kwargs):
 def resNet18_cifar10(compute_flavour, device, verbose):
     return resnet18(compute_flavour=compute_flavour, device=device, verbose=verbose, num_classes=10)
 
-def resNet18_cifar100(compute_flavour, epoch, device, verbose):
-    return resnet18(compute_flavour=compute_flavour, epoch= epoch, device=device, verbose=verbose, num_classes=100)
+def resNet18_cifar100(compute_flavour, device, verbose):
+    return resnet18(compute_flavour=compute_flavour, device=device, verbose=verbose, num_classes=100)
