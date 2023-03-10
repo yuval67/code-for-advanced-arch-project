@@ -124,7 +124,7 @@ def train_network(arch, dataset, epochs, batch_size, compute_flavour, seed,
     dataset_ = cfg.get_dataset(dataset)
 
     #build model
-    net = NeuralNet(0, arch, dataset, epochs, compute_flavour, seed,
+    net = NeuralNet(arch, dataset, epochs, compute_flavour, seed,
                     LR, LRD, WD, MOMENTUM, GAMMA, MILESTONES, device, verbose, gpus_num, distributed, save_all_states, model_path)
 
     if distributed == 0:
