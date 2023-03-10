@@ -15,7 +15,7 @@ from Model_StatsLogger import Model_StatsLogger
 
 
 class NeuralNet:
-    def __init__(self, epoch, arch, dataset, epochs, compute_flavour, seed,
+    def __init__(self, arch, dataset, epochs, compute_flavour, seed,
                       LR, LRD, WD, MOMENTUM, GAMMA, MILESTONES, device, verbose, gpus, distributed, save_all_states, model_path):
 
         for gpu_num in range(gpus):
@@ -63,7 +63,7 @@ class NeuralNet:
         self.criterion = self.criterion.cuda() if device == 'cuda' else self.criterion
 
 
-        self.model = cfg.MODELS[self.arch](compute_flavour=compute_flavour, epoch= epoch, device=device, verbose=verbose)
+        self.model = cfg.MODELS[self.arch](compute_flavour=compute_flavour, device=device, verbose=verbose)
         self.model = self.model.cuda() if device == 'cuda' else self.model
         self.model_stats = Model_StatsLogger(compute_flavour, seed, verbose)
         self.model_optimizer = optim.SGD(self.model.parameters(), lr=LR, weight_decay=WD, momentum=MOMENTUM)
