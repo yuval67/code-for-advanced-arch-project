@@ -52,7 +52,7 @@ class BasicBlock(nn.Module):
         out = self.bn1(out)
         out = self.relu(out)
 
-        out = self.conv2(out)
+        out = self.conv2(out, epoch)
         out = self.bn2(out)
 
         if self.downsample is not None:
@@ -211,10 +211,10 @@ class ResNet(nn.Module):
         #TODO: changed for CIFAR100 (from original Imagenet parameters)
         #x = self.maxpool(x)
 
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = self.layer3(x)
-        x = self.layer4(x)
+        x = self.layer1(x, epoch)
+        x = self.layer2(x, epoch)
+        x = self.layer3(x, epoch)
+        x = self.layer4(x, epoch)
 
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
